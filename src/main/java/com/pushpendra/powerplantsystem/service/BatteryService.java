@@ -8,6 +8,5 @@ import java.util.List;
 
 public interface BatteryService {
     List<Battery> saveBatteries(List<Battery> batteries);
-    Battery getBatteryByName(String name);
     BatteryStat getBatteriesBetweenPostcodeRanges(Long postCodeStart, Long postCodeEnd);
 }
