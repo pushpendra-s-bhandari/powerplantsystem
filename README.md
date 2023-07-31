@@ -100,7 +100,7 @@ Output JSON:
 
 ## Unit Testing Reference
 
-Test cases for Service "BatteryServiceImpl.java" has been done.
+Test cases for Service, Controller and Repository Layers has been done.
 
 ## Database
 
