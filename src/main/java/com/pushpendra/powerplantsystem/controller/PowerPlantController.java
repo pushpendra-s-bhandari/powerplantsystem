@@ -23,15 +23,27 @@ public class PowerPlantController {
     @Autowired
     private BatteryServiceImpl batteryService;
 
+    /**
+     * This is the rest end point used to persist batteries source to the db.
+     * if the battery source is new then create it otherwise update it.
+     * @param batteries This is the list of Batteries sources to be saved in db
+     * @return ResponseEntity<List<Battery>> This will return all the saved Batteries sources as ResponseEntity
+     */
     @PostMapping("/battery/add")
-    public ResponseEntity<List<Battery>> saveBatteriesAll(@RequestBody List<Battery> batteries) {
+    public ResponseEntity<List<Battery>> saveBatteries(@RequestBody List<Battery> batteries) {
         List<Battery> savedBatteryList = batteryService.saveBatteries(batteries);
         return new ResponseEntity<>(savedBatteryList, HttpStatus.OK);
     }
 
+    /**
+     * This is the rest endpoint to find batteries sources that fall within the given postcode ranges.
+     * The batteries list are sorted alphabetically along with statistics of average and total watt capacities
+     * @param postCodeStart This is the first param which is used as starting postCode
+     * @param postCodeEnd   This is the second param which is used as ending postCode
+     * @return BatteryStat This will return all the batteries sources which fall withing the postcode range sorted alphabetically with statistics of total and average watt capacity
+     */
     @GetMapping("/battery/range/postcode")
     public BatteryStat getBatteriesBetweenPostcodeRanges(@RequestParam Long postCodeStart, @RequestParam Long postCodeEnd){
        return batteryService.getBatteriesBetweenPostcodeRanges(postCodeStart,postCodeEnd);
     }
 }
-

@@ -1,6 +1,7 @@
 /**
  * Test Class for BatterServiceImpl class
- * @author  pushpendra
+ *
+ * @author pushpendra
  * @version 1.0
  */
 package com.pushpendra.powerplantsystem.service;
@@ -23,6 +24,7 @@ import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -40,6 +42,7 @@ public class BatteryServiceImplTest {
     BatteryRepository batteryRepository;
     static List<Battery> batteryList = new ArrayList<>();
     static List<Battery> batteryListWithoutID = new ArrayList<>();
+
     @BeforeAll
     public void createListofBatteries() {
 
@@ -69,21 +72,55 @@ public class BatteryServiceImplTest {
         batteryListWithoutID.add(battery5WithoutId);
 
     }
-
     @Test
-    @DisplayName("Test if Batteries sources can be saved in db or not")
-    public void when_saveBatteries_thenCorrect() {
+    @DisplayName("Test if Batteries sources can be saved in db or not if they are all new sources")
+    public void when_saveBatteriesNewRecords_thenCorrect() {
+        AtomicReference<Integer> id = new AtomicReference<>(0);
+        batteryListWithoutID.forEach(battery -> {
+            Mockito.when(batteryRepository.findByName(battery.getName())).thenReturn(Optional.empty());
+            Mockito.when(batteryRepository.save(battery)).thenReturn(batteryList.get(id.get()));
+            id.getAndSet(id.get() + 1);
+        });
 
-        Mockito.when(batteryRepository.saveAll(batteryListWithoutID)).thenReturn(batteryList);
-        List<Battery> batteriesActual = batteryService.saveBatteries(batteryListWithoutID);
-
-        assertEquals(5, batteriesActual.size());
+        List<Battery> savedBatteries = batteryService.saveBatteries(batteryListWithoutID);
+        assertEquals(5, savedBatteries.size());
         AtomicReference<Integer> idExpected = new AtomicReference<>(1);
-        batteriesActual.forEach(battery -> {
-            assertEquals(idExpected.toString(),battery.getId().toString());
+        savedBatteries.forEach(battery -> {
+            assertEquals(idExpected.toString(), battery.getId().toString());
             idExpected.getAndSet(idExpected.get() + 1);
         });
     }
+
+    @Test
+    @DisplayName("Test if Batteries sources can be saved in db or not if they are all new sources")
+    public void when_saveBatteriesNewRecordsAndExistingRecords_thenCorrect() {
+        AtomicReference<Integer> id = new AtomicReference<>(0);
+        batteryListWithoutID.forEach(battery -> {
+            if ((id.get() == 2) || (id.get() == 4)){
+                Mockito.when(batteryRepository.findByName(battery.getName())).thenReturn(Optional.of(batteryList.get(id.get())));
+            }
+            else{
+                Mockito.when(batteryRepository.findByName(battery.getName())).thenReturn(Optional.empty());
+            }
+
+            if ((id.get() == 2) || (id.get() == 4)) {
+                Mockito.when(batteryRepository.save(batteryList.get(id.get()))).thenReturn(batteryList.get(id.get()));
+            }
+            else{
+                Mockito.when(batteryRepository.save(battery)).thenReturn(batteryList.get(id.get()));
+            }
+            id.getAndSet(id.get() + 1);
+        });
+
+        List<Battery> savedBatteries = batteryService.saveBatteries(batteryListWithoutID);
+        assertEquals(5, savedBatteries.size());
+        AtomicReference<Integer> idExpected = new AtomicReference<>(1);
+        savedBatteries.forEach(battery -> {
+            assertEquals(idExpected.toString(), battery.getId().toString());
+            idExpected.getAndSet(idExpected.get() + 1);
+        });
+    }
+
     @Test
     @DisplayName("Test if Batteries sources Search between ranges work when if fall in the valid ranges")
     public void when_getBatteriesBetweenPostcodeRangesValidRanges_thenCorrect() {
@@ -102,17 +139,17 @@ public class BatteryServiceImplTest {
 
         Mockito.when(batteryRepository.findByPostcodeBetween(100l, 1500l, sort)).thenReturn(batteryList);
 
-        BatteryStat batteryStat = batteryService.getBatteriesBetweenPostcodeRanges(100l, 1500l);
+        BatteryStat batteryStatActual = batteryService.getBatteriesBetweenPostcodeRanges(100l, 1500l);
 
-        List<Battery> batteryListActual = batteryStat.getBatteryList();
+        List<Battery> batteryListActual = batteryStatActual.getBatteryList();
 
         StringBuffer sortedListActual = new StringBuffer();
-        batteryList.forEach(battery -> {
+        batteryListActual.forEach(battery -> {
             sortedListActual.append(battery.getId().toString());
         });
 
-        Double averageCapacityActual = batteryStat.getCapacityStat().getAverage();
-        Long sumCapacityActual = batteryStat.getCapacityStat().getTotal();
+        Double averageCapacityActual = batteryStatActual.getCapacityStat().getAverage();
+        Long sumCapacityActual = batteryStatActual.getCapacityStat().getTotal();
 
         assertEquals(sortedListExpected.toString(), sortedListActual.toString());
         assertEquals(averageCapacityExpected, averageCapacityActual);
@@ -128,16 +165,14 @@ public class BatteryServiceImplTest {
 
         Mockito.when(batteryRepository.findByPostcodeBetween(100l, 1500l, sort)).thenReturn(null);
 
-        BatteryStat batteryStat = batteryService.getBatteriesBetweenPostcodeRanges(100l, 1500l);
+        BatteryStat batteryStatActual = batteryService.getBatteriesBetweenPostcodeRanges(100l, 1500l);
 
-        List<Battery> batteryListActual = batteryStat.getBatteryList();
+        List<Battery> batteryListActual = batteryStatActual.getBatteryList();
 
-        CapacityStat capacityStatActual = batteryStat.getCapacityStat();
+        CapacityStat capacityStatActual = batteryStatActual.getCapacityStat();
 
         assertNull(batteryListActual);
         assertNull(capacityStatActual);
-
-
 
     }
 }

@@ -2,7 +2,7 @@
  * Battery Service Implementation class
  * This contains all the functionalities implementation defined in the  BatteryService Interface
  *
- * @author  pushpendra
+ * @author pushpendra
  * @version 1.0
  */
 package com.pushpendra.powerplantsystem.service;
@@ -32,9 +32,33 @@ public class BatteryServiceImpl implements BatteryService {
      * @return List<Battery> This will return all the saved Batteries sources
      */
     public List<Battery> saveBatteries(List<Battery> batteries) {
-        return batteryRepository.saveAll(batteries);
-    }
+        List<Battery> savedList = new ArrayList<>();
 
+        batteries.forEach(battery -> {
+
+            Optional<Battery> existingBatteryOptional= batteryRepository.findByName(battery.getName());
+
+            if (existingBatteryOptional.isPresent()){
+                Battery existingBattery = existingBatteryOptional.get();
+                existingBattery.setCapacity(battery.getCapacity());
+                existingBattery.setPostcode(battery.getPostcode());
+                existingBattery = batteryRepository.save(existingBattery);
+                savedList.add(existingBattery);
+
+            }
+            else{
+                Battery newBattery = new Battery();
+                newBattery.setName(battery.getName());
+                newBattery.setPostcode(battery.getPostcode());
+                newBattery.setCapacity(battery.getCapacity());
+                newBattery = batteryRepository.save(newBattery);
+                savedList.add(newBattery);
+            }
+
+        });
+
+        return savedList;
+    }
     /**
      * This method is used to find batteries sources that fall within the given postcode ranges.
      * The batteries list are sorted alphabetically along with statistics of average and total watt capacities
@@ -42,7 +66,7 @@ public class BatteryServiceImpl implements BatteryService {
      * @param postCodeEnd   This is the second param which is used as ending postCode
      * @return BatteryStat This will return all the batteries sources which fall withing the postcode range sorted alphabetically with statistics of total and average watt capacity
      */
-    public BatteryStat getBatteriesBetweenPostcodeRanges(Long postCodeStart, Long postCodeEnd){
+    public BatteryStat getBatteriesBetweenPostcodeRanges(Long postCodeStart, Long postCodeEnd) {
 
         Sort sort = Sort.by("name").ascending();
         List<Battery> batteries = batteryRepository.findByPostcodeBetween(postCodeStart, postCodeEnd, sort);
