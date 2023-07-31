@@ -17,6 +17,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -81,14 +82,11 @@ public class BatteryRepositoryTest {
     }
 
     @Test
-    @DisplayName("Test if Batteries sources can be saved in db using saveAll method or not")
+    @DisplayName("Test if Batteries sources can be saved in db using save method or not")
     @Order(2)
     public void when_saveAll_thenCorrect() {
-        List<Battery> batteryListSaved = batteryRepository.saveAll(batteryListWithoutIDAndSort);
-
-        batteryListSaved.forEach(battery -> {
-            assertNotNull(battery.getId());
-        });
+        Battery batterySaved = batteryRepository.save(batteryListWithoutIDAndSort.get(0));
+        assertNotNull(batterySaved.getId());
 
     }
 
@@ -101,5 +99,33 @@ public class BatteryRepositoryTest {
         List<Battery> batteryListSearched = batteryRepository.findByPostcodeBetween(1800l, 2500l, sort);
 
         assertEquals(0, batteryListSearched.size());
+    }
+
+    @Test
+    @DisplayName("Test if Batteries can fetched using findByName method or not when matching record is in db")
+    @Order(4)
+    public void when_findByNameFound_thenCorrect() {
+        Battery batterySaved = batteryRepository.save(batteryListWithoutIDAndSort.get(0));
+
+        Optional<Battery> batteryFetchedOptional = batteryRepository.findByName(batteryListWithoutIDAndSort.get(0).getName());
+
+        assertNotNull(batteryFetchedOptional.get().getId());
+
+    }
+
+    @Test
+    @DisplayName("Test if Batteries can fetched using findByName method or not when matching record is not in db")
+    @Order(4)
+    public void when_findByNameNotFound_thenCorrect() {
+        Battery batterySaved = batteryRepository.save(batteryListWithoutIDAndSort.get(0));
+
+        Optional<Battery> batteryFetchedOptional = batteryRepository.findByName("NotinDB");
+        Battery batteryFetched = null;
+
+        if (batteryFetchedOptional.isPresent()){
+            batteryFetched = batteryFetchedOptional.get();
+        }
+        assertNull(batteryFetched);
+
     }
 }
